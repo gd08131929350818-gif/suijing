@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git config:*)",
+      "Bash(gh repo:*)",
+      "Bash(vercel --yes)",
+      "Bash(npm i:*)",
+      "Bash(vercel whoami:*)",
+      "Bash(vercel --prod --yes)",
+      "Bash(cd:*)",
+      "Bash(vercel deploy:*)",
+      "Bash(vercel --version)",
+      "Bash(vercel link:*)",
+      "Bash(vercel login:*)",
+      "Bash(vercel switch:*)",
+      "Bash(vercel teams:*)",
+      "Bash(vercel --scope gd08131929350818-gif --yes)"
+    ]
+  }
+}
