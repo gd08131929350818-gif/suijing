@@ -640,7 +640,7 @@ const App = dynamic(() => Promise.resolve(MapCore), {
   ssr: false,
   loading: () => (
     <div style={{
-      width: '100vw', height: '100vh', height: '100dvh',
+      width: '100vw', height: '100dvh',
       background: '#0a0a0f', display: 'flex',
       alignItems: 'center', justifyContent: 'center',
       flexDirection: 'column', gap: 12,
