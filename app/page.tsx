@@ -463,7 +463,7 @@ function MapCore() {
   // 渲染 — 响应式布局
   // ============================================================
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', height: '100dvh', overflow: 'hidden', background: '#0a0a0f' }}>
+    <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#0a0a0f' }}>
 
       {/* 进度条 */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, height: 3, paddingTop: 'var(--safe-top)' }}>
