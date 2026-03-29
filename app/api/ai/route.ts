@@ -7,6 +7,7 @@ export async function POST(req: NextRequest) {
   try {
     const { scene, weather } = await req.json();
 
+    // 非流式请求（更兼容）
     const response = await fetch(`${BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -17,6 +18,7 @@ export async function POST(req: NextRequest) {
         model: 'gpt-4o-mini',
         max_tokens: 100,
         temperature: 0.9,
+        stream: false,
         messages: [
           {
             role: 'system',
@@ -27,36 +29,23 @@ export async function POST(req: NextRequest) {
             content: `现在驶过「${scene}」，天气「${weather}」，请用20字以内描述此刻的音乐氛围。`
           }
         ],
-        stream: true,
       }),
     });
 
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content?.trim() || '';
+
+    if (!text) {
+      console.error('AI 返回空内容:', JSON.stringify(data));
+      return NextResponse.json({ error: '空响应' }, { status: 500 });
+    }
+
+    // 把完整文本拆成逐字的 SSE 事件，前端打字机效果不变
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) { controller.close(); return; }
-
-        const decoder = new TextDecoder();
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
-
-          for (const line of lines) {
-            const data = line.slice(6).trim();
-            if (data === '[DONE]') continue;
-
-            try {
-              const json = JSON.parse(data);
-              const content = json.choices?.[0]?.delta?.content;
-              if (content) {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
-              }
-            } catch {}
-          }
+      start(controller) {
+        for (const char of text) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: char })}\n\n`));
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
