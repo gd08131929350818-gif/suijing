@@ -7,7 +7,6 @@ export async function POST(req: NextRequest) {
   try {
     const { scene, weather } = await req.json();
 
-    // 使用非流式请求（更兼容各种代理）
     const response = await fetch(`${BASE_URL}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -18,7 +17,6 @@ export async function POST(req: NextRequest) {
         model: 'gpt-4o-mini',
         max_tokens: 100,
         temperature: 0.9,
-        stream: false,
         messages: [
           {
             role: 'system',
@@ -29,35 +27,36 @@ export async function POST(req: NextRequest) {
             content: `现在驶过「${scene}」，天气「${weather}」，请用20字以内描述此刻的音乐氛围。`
           }
         ],
+        stream: true,
       }),
     });
 
-    const data = await response.json();
-
-    // 提取文本
-    let text = '';
-    if (data.choices && data.choices[0]) {
-      text = data.choices[0].message?.content || data.choices[0].text || '';
-    } else if (data.error) {
-      console.error('OpenAI API error:', data.error);
-      text = getFallback(scene);
-    }
-
-    if (!text) {
-      text = getFallback(scene);
-    }
-
-    // 把完整文本逐字拆分，通过 SSE 发送给前端（模拟流式打字机效果）
     const encoder = new TextEncoder();
     const readable = new ReadableStream({
       async start(controller) {
-        const chars = [...text.trim()];
-        for (const char of chars) {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ text: char })}\n\n`)
-          );
-          // 小延迟让前端逐字接收
-          await new Promise(r => setTimeout(r, 10));
+        const reader = response.body?.getReader();
+        if (!reader) { controller.close(); return; }
+
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+          for (const line of lines) {
+            const data = line.slice(6).trim();
+            if (data === '[DONE]') continue;
+
+            try {
+              const json = JSON.parse(data);
+              const content = json.choices?.[0]?.delta?.content;
+              if (content) {
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+              }
+            } catch {}
+          }
         }
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
@@ -73,39 +72,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('AI API error:', error);
-
-    // 降级：返回预设文案
-    const { scene } = await req.json().catch(() => ({ scene: '' }));
-    const fallback = getFallback(scene);
-    const encoder = new TextEncoder();
-    const readable = new ReadableStream({
-      start(controller) {
-        for (const char of [...fallback]) {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ text: char })}\n\n`)
-          );
-        }
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      },
-    });
-
-    return new Response(readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-      },
-    });
+    return NextResponse.json({ error: 'AI 请求失败' }, { status: 500 });
   }
-}
-
-function getFallback(scene: string): string {
-  const map: Record<string, string> = {
-    '海滨公路': '海风轻拂，旋律随浪花起伏',
-    '山区公路': '山雾缭绕，琴音在松林间回荡',
-    '城市夜晚': '霓虹闪烁，节拍融入车流脉搏',
-    '高速巡航': '引擎低鸣，速度感充盈每个音符',
-    '隧道穿越': '回声叠叠，低音在隧道中共振',
-  };
-  return map[scene] || '旋律随路途变幻，此刻恰好';
 }

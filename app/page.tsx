@@ -178,7 +178,6 @@ function useAIText() {
       if (charQueue.length > 0 && !typing) { typing = true; typeNext(); }
     } catch (e: any) {
       if (e.name !== 'AbortError') {
-        // 降级文案
         const fb = getFallback(sceneName);
         let i = 0;
         const t = () => { if (i < fb.length) { onChar(fb[i++]); timerRef.current.push(window.setTimeout(t, 50)); } else onDone(); };
@@ -247,7 +246,6 @@ function MapCore() {
   const [ready, setReady] = useState(false);
   const [done, setDone] = useState(false);
 
-  // DOM refs
   const barRef = useRef<HTMLDivElement>(null);
   const nameRef = useRef<HTMLSpanElement>(null);
   const descRef = useRef<HTMLSpanElement>(null);
@@ -272,7 +270,6 @@ function MapCore() {
   const fetchWeatherRef = useRef(fetchWeather);
   fetchWeatherRef.current = fetchWeather;
 
-  // ------ AI 触发 ------
   const triggerAI = useCallback(async (sceneIdx: number) => {
     const el = aiTextRef.current;
     if (!el) return;
@@ -298,7 +295,6 @@ function MapCore() {
   const triggerAIRef = useRef(triggerAI);
   triggerAIRef.current = triggerAI;
 
-  // ------ UI 更新 ------
   const updateUI = useCallback((si: number, pct: number) => {
     const sc = SCENES[si];
     if (barRef.current) {
@@ -334,7 +330,6 @@ function MapCore() {
     });
   }, []);
 
-  // ------ 地图 ------
   useEffect(() => {
     if ((window as any).AMap) { build(); return; }
     const s = document.createElement('script');
@@ -381,7 +376,6 @@ function MapCore() {
     fetchWeatherRef.current();
   }
 
-  // ------ 动画 ------
   const tick = useCallback((ts: number) => {
     const A = (window as any).AMap;
     const car = carRef.current;
@@ -416,7 +410,6 @@ function MapCore() {
     rafRef.current = requestAnimationFrame(tick);
   }, [updateUI]);
 
-  // ------ 控制 ------
   const go = useCallback(() => {
     if (!mapRef.current || !carRef.current) return;
     audioRef.current.init();
@@ -459,34 +452,24 @@ function MapCore() {
 
   const sc0 = SCENES[0];
 
-  // ============================================================
-  // 渲染 — 响应式布局
-  // ============================================================
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#0a0a0f' }}>
 
-      {/* 进度条 */}
       <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, height: 3, paddingTop: 'var(--safe-top)' }}>
         <div style={{ height: '100%', background: 'rgba(255,255,255,0.06)' }}>
           <div ref={barRef} style={{ height: '100%', width: '0%', borderRadius: 2, transition: 'width 0.08s linear' }} />
         </div>
       </div>
 
-      {/* 顶部导航 — 手机上更紧凑 */}
       <div style={{
-        position: 'fixed',
-        top: 'calc(8px + var(--safe-top))',
-        left: '50%', transform: 'translateX(-50%)',
-        zIndex: 9999, display: 'flex', gap: 4,
-        maxWidth: '100vw', padding: '0 8px',
-        overflowX: 'auto', overflowY: 'hidden',
-        scrollbarWidth: 'none',
+        position: 'fixed', top: 'calc(8px + var(--safe-top))', left: '50%', transform: 'translateX(-50%)',
+        zIndex: 9999, display: 'flex', gap: 4, maxWidth: '100vw', padding: '0 8px',
+        overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none',
       }}>
         {SCENES.map((s, i) => (
           <div key={s.tag} ref={el => { navItemsRef.current[i] = el; }} style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            padding: '4px 8px', borderRadius: 9999,
-            fontSize: 10, fontWeight: 500, whiteSpace: 'nowrap',
+            padding: '4px 8px', borderRadius: 9999, fontSize: 10, fontWeight: 500, whiteSpace: 'nowrap',
             background: i === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
             color: i === 0 ? '#fff' : 'rgba(255,255,255,0.35)',
             backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
@@ -501,46 +484,33 @@ function MapCore() {
         ))}
       </div>
 
-      {/* 地图 */}
       <div ref={boxRef} style={{ position: 'absolute', inset: 0, zIndex: 1 }} />
 
-      {/* 地图底部渐变遮罩 — 让卡片区域更易读 */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, height: '40vh',
         background: 'linear-gradient(to top, rgba(10,10,15,0.85) 0%, rgba(10,10,15,0.4) 50%, transparent 100%)',
         zIndex: 2, pointerEvents: 'none',
       }} />
 
-      {/* 底部面板 */}
       <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0,
-        zIndex: 9999, pointerEvents: 'none',
-        padding: '12px',
-        paddingBottom: 'max(16px, calc(var(--safe-bottom) + 8px))',
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999, pointerEvents: 'none',
+        padding: '12px', paddingBottom: 'max(16px, calc(var(--safe-bottom) + 8px))',
       }}>
-        <div style={{
-          maxWidth: 420, margin: '0 auto',
-          display: 'flex', flexDirection: 'column', gap: 8,
-          pointerEvents: 'auto',
-        }}>
+        <div style={{ maxWidth: 420, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'auto' }}>
 
-          {/* 场景卡片 */}
           <div ref={cardRef} style={{
             position: 'relative', overflow: 'hidden', borderRadius: 14,
             backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
             padding: '14px 16px', transition: 'all 0.6s ease',
             background: `linear-gradient(135deg, ${sc0.color}22, ${sc0.color}0a)`,
-            border: `1px solid ${sc0.color}33`,
-            boxShadow: `0 8px 32px ${sc0.color}18`,
+            border: `1px solid ${sc0.color}33`, boxShadow: `0 8px 32px ${sc0.color}18`,
           }}>
             <div ref={glowRef} style={{
               position: 'absolute', top: -32, right: -32, width: 80, height: 80,
               borderRadius: '50%', filter: 'blur(24px)', opacity: 0.2,
               background: sc0.color, transition: 'all 0.6s',
             }} />
-
             <div style={{ position: 'relative' }}>
-              {/* 头部行 */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <span ref={dotRef} style={{
@@ -553,54 +523,41 @@ function MapCore() {
                   <span ref={weatherTagRef} style={{
                     fontSize: 10, color: 'rgba(255,255,255,0.5)',
                     background: 'rgba(255,255,255,0.08)', padding: '2px 7px',
-                    borderRadius: 99, opacity: 0, transition: 'opacity 0.4s',
-                    letterSpacing: '0.03em',
+                    borderRadius: 99, opacity: 0, transition: 'opacity 0.4s', letterSpacing: '0.03em',
                   }} />
                 </div>
                 <div ref={numRef} style={{
                   width: 36, height: 36, borderRadius: 10, fontSize: 12, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: `${sc0.color}28`, color: sc0.color, border: `1px solid ${sc0.color}44`,
-                  flexShrink: 0,
+                  background: `${sc0.color}28`, color: sc0.color, border: `1px solid ${sc0.color}44`, flexShrink: 0,
                 }}>
                   1/5
                 </div>
               </div>
-
-              {/* 音乐风格 */}
               <span ref={descRef} style={{
                 color: 'rgba(255,255,255,0.35)', fontSize: 12,
-                fontFamily: 'ui-monospace, "SF Mono", monospace',
-                letterSpacing: '0.04em',
+                fontFamily: 'ui-monospace, "SF Mono", monospace', letterSpacing: '0.04em',
               }}>
                 {sc0.description}
               </span>
-
-              {/* AI 文案 */}
-              <div style={{
-                marginTop: 8, minHeight: 22, paddingTop: 8,
-                borderTop: '1px solid rgba(255,255,255,0.06)',
-              }}>
+              <div style={{ marginTop: 8, minHeight: 22, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
                   <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, flexShrink: 0, marginTop: 2 }}>✨ AI</span>
                   <div ref={aiTextRef} style={{
-                    color: 'rgba(255,255,255,0.7)', fontSize: 13,
-                    lineHeight: 1.6, fontStyle: 'italic',
-                    letterSpacing: '0.02em',
+                    color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 1.6,
+                    fontStyle: 'italic', letterSpacing: '0.02em',
                   }} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 按钮 */}
           <div style={{ display: 'flex', gap: 8 }}>
             {!playing ? (
               <button onClick={go} disabled={!ready} style={{
                 flex: 1, padding: 12, borderRadius: 11, fontWeight: 600, fontSize: 14,
                 border: 'none', cursor: ready ? 'pointer' : 'not-allowed',
-                opacity: ready ? 1 : 0.4, background: '#fff', color: '#0a0a0f',
-                letterSpacing: '0.05em',
+                opacity: ready ? 1 : 0.4, background: '#fff', color: '#0a0a0f', letterSpacing: '0.05em',
               }}>
                 {done ? '▶  重新行驶' : pausedAtRef.current > 0 ? '▶  继续行驶' : '▶  开始行驶'}
               </button>
@@ -608,8 +565,7 @@ function MapCore() {
               <button onClick={pause} style={{
                 flex: 1, padding: 12, borderRadius: 11, fontWeight: 600, fontSize: 14,
                 border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer',
-                background: 'rgba(255,255,255,0.08)', color: '#fff',
-                letterSpacing: '0.05em',
+                background: 'rgba(255,255,255,0.08)', color: '#fff', letterSpacing: '0.05em',
               }}>
                 ⏸  暂停
               </button>
@@ -623,7 +579,6 @@ function MapCore() {
             </button>
           </div>
 
-          {/* 品牌标识 */}
           <div style={{ textAlign: 'center', paddingTop: 2 }}>
             <span style={{ color: 'rgba(255,255,255,0.12)', fontSize: 10, fontFamily: 'ui-monospace, monospace', letterSpacing: '0.1em' }}>
               随景 · SUIJING
@@ -635,7 +590,6 @@ function MapCore() {
   );
 }
 
-// ============================================================
 const App = dynamic(() => Promise.resolve(MapCore), {
   ssr: false,
   loading: () => (

@@ -2,11 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================
-   随景 · SuiJing — 全局样式
-   Apple Maps 夜间模式风格
-   ============================ */
-
 :root {
   --bg: #0a0a0f;
   --card-blur: 20px;
@@ -31,12 +26,10 @@ html, body {
     'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* 防止 iOS 下拉回弹 */
   overscroll-behavior: none;
   touch-action: manipulation;
 }
 
-/* 移动端全屏适配 */
 html {
   height: -webkit-fill-available;
 }
@@ -45,12 +38,10 @@ body {
   min-height: -webkit-fill-available;
 }
 
-/* 隐藏高德地图多余 UI */
 .amap-logo { opacity: 0.2 !important; }
 .amap-copyright { opacity: 0 !important; }
 .amap-maps { cursor: default !important; }
 
-/* 按钮交互反馈 */
 button {
   transition: all 0.2s ease;
   -webkit-user-select: none;
@@ -61,7 +52,6 @@ button:active {
   opacity: 0.9;
 }
 
-/* 打字机光标动画 */
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
@@ -73,5 +63,4 @@ button:active {
   margin-left: 1px;
 }
 
-/* 滚动条隐藏 */
 ::-webkit-scrollbar { display: none; }
